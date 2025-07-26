@@ -16,7 +16,7 @@ from rich.table import Table
 from rich.text import Text
 from dotenv import load_dotenv
 from rich import traceback as rich_traceback
-from licface import CustomRichHelpFormatter  # pastikan modul ini tersedia
+from licface import CustomRichHelpFormatter 
 
 rich_traceback.install(show_locals=False, theme='fruity', width=os.get_terminal_size()[0])
 
@@ -65,7 +65,7 @@ class GoogleSearcher:
             data = response.json()
 
             if "items" not in data:
-                self.console.print("[bold red]❌ Tidak ada hasil ditemukan atau error API.[/bold red]")
+                self.console.print("[bold red]❌ No any result found or API error.[/bold red]")
                 data = self.last_data
                 # jprint(data)
                 # return []
@@ -73,8 +73,8 @@ class GoogleSearcher:
             if page == 1:
                 self.total_results = int(data["searchInformation"]["totalResults"])
                 self.total_pages = min((self.total_results + per_page - 1) // per_page, 10)
-                self.console.print(f"\n[bold cyan]🔎 Total hasil ditemukan:[/bold cyan] [red on yellow]{self.total_results:,}[/]")
-                self.console.print(f"[bold #FFFF00]📄 Total halaman tersedia:[/] [blue on #AAFF00]{self.total_pages}[/]\n")
+                self.console.print(f"\n[bold cyan]🔎 Total Result:[/bold cyan] [red on yellow]{self.total_results:,}[/]")
+                self.console.print(f"[bold #FFFF00]📄 Total Page:[/] [blue on #AAFF00]{self.total_pages}[/]\n")
 
             items = data.get("items", [])
             self.cached_pages[page] = items
@@ -87,7 +87,7 @@ class GoogleSearcher:
 
     def print_results(self, items, page):
         if not items:
-            self.console.print("[white on red blink]Tidak ada hasil ditemukan.[/]")
+            self.console.print("[white on red blink]No any result found !.[/]")
             return
 
         self.console.rule(f"[black on white][blue on white]Page[/] [red on white]{page}[/] / [#55007F on white]{self.total_pages}[/][/]")
@@ -107,20 +107,20 @@ class GoogleSearcher:
 
     def open_in_browser(self, url: str):
         if not self.browser_path:
-            self.console.print("[red]❌ Path ke browser tidak disediakan (--browser atau .env)[/red]")
+            self.console.print("[red]❌ Path to browser if exists (--browser or .env)[/red]")
             return
         try:
             subprocess.Popen([self.browser_path, url], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-            self.console.print(f"[green]🌐 Membuka:[/green] {url}")
+            self.console.print(f"[green]🌐 Opening:[/green] {url}")
         except Exception as e:
-            self.console.print(f"[red]Gagal membuka browser:[/red] {e}")
+            self.console.print(f"[red]Failed open Browser:[/red] {e}")
 
     def save_to_file(self, query: str, page: int, items: list):
         fname = self.save_dir / f"{query.replace(' ', '_')}_page{page}.txt"
         with open(fname, "w", encoding="utf-8") as f:
             for item in items:
                 f.write(f"{item['title']}\n{item['link']}\n\n")
-        self.console.print(f"[dim]📁 Disimpan ke:[/dim] {fname}")
+        self.console.print(f"[dim]📁 Save to:[/dim] {fname}")
 
 
 def load_config() -> dict:
@@ -130,7 +130,7 @@ def load_config() -> dict:
             with open(CONFIG_FILE, "r") as f:
                 config.update(json.load(f))
         except Exception as e:
-            Console().print(f"[red]⚠️ Gagal membaca config.json:[/red] {e}")
+            Console().print(f"[red]⚠️ Failed read from config.json:[/red] {e}")
 
     if ENV_FILE.exists():
         load_dotenv(dotenv_path=ENV_FILE)
@@ -144,15 +144,15 @@ def load_config() -> dict:
 
 def main():
     parser = argparse.ArgumentParser(
-        description="🔍 Google Search dari Terminal dengan Python",
+        description="🔍 Google Search CLI",
         formatter_class=CustomRichHelpFormatter,
     )
-    parser.add_argument("query", help="Kata kunci pencarian", nargs='*')
-    parser.add_argument("--max", type=int, default=10, help="Jumlah maksimal hasil (default: 10, maks: 100)")
+    parser.add_argument("query", help="Search for", nargs='*')
+    parser.add_argument("--max", type=int, default=10, help="Number max of results (default: 10, maks: 100)")
     parser.add_argument("--apikey", help="Google API key")
     parser.add_argument("--cseid", help="Google Custom Search Engine ID")
-    parser.add_argument("--save", help="Folder untuk menyimpan hasil ke file (opsional)")
-    parser.add_argument("--browser", help="Path ke executable browser (misal: /usr/bin/firefox)")
+    parser.add_argument("--save", help="Folder to save to file (optional)")
+    parser.add_argument("--browser", help="Path to executable browser (ex: /usr/bin/firefox)")
 
     if len(sys.argv) == 1:
         parser.print_help()
@@ -160,7 +160,7 @@ def main():
 
     args = parser.parse_args()
     if args.max > 100:
-        print("⚠️ Maksimal hasil yang bisa diambil hanya 100 karena batas dari Google API.")
+        print("⚠️ Maximum results is 100 cause limit of Google API.")
         args.max = 100
 
     config = load_config()
@@ -170,7 +170,7 @@ def main():
     browser_bin_path = args.browser or config.get("browser_bin_path")
 
     if not api_key or not cse_id:
-        Console().print("[bold red]❌ API key dan CSE ID belum disediakan. Gunakan argumen atau config.json / .env[/bold red]")
+        Console().print("[bold red]❌ API key and CSE ID not given.Use argument or config.json / .env[/bold red]")
         return
 
     query_str = " ".join(args.query)
@@ -204,9 +204,9 @@ def main():
                 if 1 <= goto <= searcher.total_pages:
                     page = goto
                 else:
-                    print("Halaman tidak valid.")
+                    print("Page not Found.")
             except Exception:
-                print("Format salah. Gunakan 'g 3' atau ketik angka saat diminta.")
+                print("Invalid Format. Use 'g 3' or type number.")
         elif cmd.lower() in ["q", 'quit', 'e', 'exit']:
             break
         elif cmd.isdigit():
@@ -215,13 +215,13 @@ def main():
                 url = items[idx - 1]['link']
                 searcher.open_in_browser(url)
             else:
-                print("Nomor tidak valid.")
+                print("Invalid Number.")
         else:
             if cmd: 
                 query_str = cmd
                 searcher = GoogleSearcher(api_key, cse_id, browser_path=browser_bin_path, save_dir=args.save)
             else:
-                print("Perintah tidak dikenal.")
+                print("Unknown Command.")
 
 
 if __name__ == "__main__":
